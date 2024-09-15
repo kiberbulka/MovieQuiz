@@ -1,21 +1,25 @@
 import UIKit
 
-final class MovieQuizViewController: UIViewController {
+final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     // MARK: - Public Properties
-    private let questionsAmount: Int = 10
-    private let questionFactory: QuestionFactoryProtocol = QuestionFactory()
-    private var currentQuestion: QuizQuestion?
-    private let alert = UIAlertController(
-        title: "Этот раунд окончен!",
-        message: "Ваш результат ???",
-        preferredStyle: .alert)
     // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
-        if let firstQuestion = questionFactory.requestNextQuestion() {
-            currentQuestion = firstQuestion
-            let viewModel = convert(model: firstQuestion)
-            show(quiz: viewModel)
+        let questionFactory = QuestionFactory()
+            questionFactory.delegate = self         
+            self.questionFactory = questionFactory
+        questionFactory.requestNextQuestion()
+    }
+    // MARK: - QuestionFactoryDelegate
+    func didRecieveNextQuestion(question: QuizQuestion?) {
+        guard let question = question else {
+            return
+        }
+        currentQuestion = question
+        let viewModel = convert(model: question)
+        
+        DispatchQueue.main.async { [weak self] in
+            self?.show(quiz: viewModel)
         }
     }
     // MARK: - IB Outlets
@@ -28,10 +32,15 @@ final class MovieQuizViewController: UIViewController {
     
     
     // MARK: - Private Properties
-    
+    private let questionsAmount: Int = 10
+    private var questionFactory: QuestionFactoryProtocol = QuestionFactory()
+    private var currentQuestion: QuizQuestion?
     private var currentQuestionIndex = 0
     private var correctAnswers = 0
-    
+    private let alert = UIAlertController(
+        title: "Этот раунд окончен!",
+        message: "Ваш результат ???",
+        preferredStyle: .alert)
     // MARK: - IB Actions
     @IBAction private func yesButtonClocked(_ sender: UIButton) {
         guard let currentQuestion = currentQuestion else {
@@ -41,7 +50,6 @@ final class MovieQuizViewController: UIViewController {
             showAnswerResult(isCorrect: givenAnswer == currentQuestion.correctAnswer)
         yesButton.isEnabled = false
         noButton.isEnabled = false
-        
     }
     @IBAction private func noButtonClicked(_ sender: UIButton) {
         guard let currentQuestion = currentQuestion else {
@@ -78,11 +86,7 @@ final class MovieQuizViewController: UIViewController {
             show(quiz: viewModel)
         } else {
             currentQuestionIndex += 1
-            if let nextQuestion = questionFactory.requestNextQuestion() {
-                currentQuestion = nextQuestion
-                let viewModel = convert(model: nextQuestion)
-                show(quiz: viewModel)
-            }
+            self.questionFactory.requestNextQuestion()
         }
     }
     private func convert(model: QuizQuestion) -> QuizStepViewModel {
@@ -112,17 +116,11 @@ final class MovieQuizViewController: UIViewController {
             self.currentQuestionIndex = 0
             self.correctAnswers = 0
 
-            if let firstQuestion = self.questionFactory.requestNextQuestion()
-                {
-                self.currentQuestion = firstQuestion
-                let viewModel = self.convert(model: firstQuestion)
-                self.show(quiz: viewModel)
-                }
+            self.questionFactory.requestNextQuestion()
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in // слабая ссылка на self
-            guard let self = self else { return } // разворачиваем слабую ссылку
-            self.showNextQuestionOrResults()
-        }
+        //DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+            //guard let self = self else { return }
+            //self.showNextQuestionOrResults()
         alert.addAction(action)
         self.present(alert, animated: true, completion: nil)
         }
