@@ -1,6 +1,6 @@
 import UIKit
 
-final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
+final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, AlertPresenterDelegate {
     // MARK: - Public Properties
     // MARK: - Lifecycle
     override func viewDidLoad() {
@@ -22,6 +22,11 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
             self?.show(quiz: viewModel)
         }
     }
+    //MARK: - ShowAlert:
+    func showAlert(model: AlertModel?) {
+        <#code#>
+    }
+    
     // MARK: - IB Outlets
     @IBOutlet private var imageView: UIImageView!
     @IBOutlet private var textLabel: UILabel!
@@ -105,25 +110,16 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         imageView.layer.borderColor = UIColor.clear.cgColor
     }
     private func show(quiz result: QuizResultsViewModel) {
-        let alert = UIAlertController(
-            title: result.title,
-            message: result.text,
-            preferredStyle: .alert)
+        
+                        self.currentQuestionIndex = 0
+                        self.correctAnswers = 0
 
-        let action = UIAlertAction(title: result.buttonText, style: .default) { [weak self] _ in // слабая ссылка на self
-            guard let self = self else { return } // разворачиваем слабую ссылку
-
-            self.currentQuestionIndex = 0
-            self.correctAnswers = 0
-
-            self.questionFactory.requestNextQuestion()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+            guard let self = self else { return }
+            self.showNextQuestionOrResults()
         }
-        //DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
-            //guard let self = self else { return }
-            //self.showNextQuestionOrResults()
-        alert.addAction(action)
-        self.present(alert, animated: true, completion: nil)
-        }
+        
+}
     
 }
 /*
