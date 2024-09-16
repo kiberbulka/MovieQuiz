@@ -6,9 +6,10 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
     override func viewDidLoad() {
         super.viewDidLoad()
         let questionFactory = QuestionFactory()
-            questionFactory.delegate = self         
-            self.questionFactory = questionFactory
+        questionFactory.delegate = self
+        self.questionFactory = questionFactory
         questionFactory.requestNextQuestion()
+        alertPresenter = AlertPresenter(delegate: self)
     }
     // MARK: - QuestionFactoryDelegate
     func didRecieveNextQuestion(question: QuizQuestion?) {
@@ -22,10 +23,16 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
             self?.show(quiz: viewModel)
         }
     }
-    //MARK: - ShowAlert:
-    func showAlert(model: AlertModel?) {
-        <#code#>
-    }
+    // MARK: - AlertPresenterDelegate
+        func presentAlert(with model: AlertModel) {
+            let alertController = UIAlertController(title: model.title, message: model.message, preferredStyle: .alert)
+            let action = UIAlertAction(title: model.buttonText, style: .default) {
+                [weak self] _ in
+                guard let self = self else {return}
+            }
+            alertController.addAction(action)
+            present(alertController, animated: true, completion: nil)
+        }
     
     // MARK: - IB Outlets
     @IBOutlet private var imageView: UIImageView!
@@ -46,6 +53,8 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
         title: "Этот раунд окончен!",
         message: "Ваш результат ???",
         preferredStyle: .alert)
+    private var alertPresenter: AlertPresenter?
+    
     // MARK: - IB Actions
     @IBAction private func yesButtonClocked(_ sender: UIButton) {
         guard let currentQuestion = currentQuestion else {
@@ -110,9 +119,18 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
         imageView.layer.borderColor = UIColor.clear.cgColor
     }
     private func show(quiz result: QuizResultsViewModel) {
-        
-                        self.currentQuestionIndex = 0
-                        self.correctAnswers = 0
+        let alertModel = AlertModel(
+            title: result.title,
+            message: result.text,
+            buttonText:"Сыграть ещё раз",
+            completion: { [weak self] _ in
+                guard let self = self else {return}
+                self?.show(quiz: alertModel)
+            }
+        )
+                alertPresenter?.presentAlert(with: alertModel)
+                self.currentQuestionIndex = 0
+                self.correctAnswers = 0
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
             guard let self = self else { return }
@@ -185,3 +203,4 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
  Вопрос: Рейтинг этого фильма больше чем 6?
  Ответ: НЕТ
 */
+

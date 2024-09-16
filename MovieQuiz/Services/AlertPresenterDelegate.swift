@@ -8,5 +8,6 @@
 import Foundation
 
 protocol AlertPresenterDelegate: AnyObject {
-    func showAlert(model: AlertModel?)
+    func presentAlert(with model: AlertModel)
 }
+
