@@ -31,18 +31,18 @@ final class StatisticService: StatisticServiceProtocol{
             return GameResult(correct: correct, total: total, date: date)
         }
         set {
-            storage.set(newValue, forKey: Keys.correct.rawValue)
-            storage.set(newValue, forKey: Keys.total.rawValue)
-            storage.set(newValue, forKey: Keys.date.rawValue)
+            storage.set(newValue.correct, forKey: Keys.correct.rawValue)
+            storage.set(newValue.total, forKey: Keys.total.rawValue)
+            storage.set(newValue.date, forKey: Keys.date.rawValue)
         }
     }
     
     var totalAccuracy: Double {
         get {
-            return gamesCount > 0 ? Double(100 * correctAnswers / totalAnswers) : 0
+            return storage.double(forKey: Keys.totalAccuracy.rawValue)
         }
         set {
-            storage.set(newValue, forKey: "totalAccuracy")
+            storage.set(newValue, forKey: Keys.totalAccuracy.rawValue)
         }
     }
     
@@ -69,6 +69,7 @@ final class StatisticService: StatisticServiceProtocol{
         gamesCount = newGamesCount
         let totalQuestionsCount = Double(gamesCount) * 10.0
         let correctAnswersCount = totalAccuracy * totalQuestionsCount / 100.0 + Double(currentGameResult.correct)
+        totalAnswers = Int(totalQuestionsCount)
         guard gamesCount != 0 else {return}
         let newAccuracy = (correctAnswersCount/totalQuestionsCount) * 100
         totalAccuracy = newAccuracy
@@ -84,6 +85,7 @@ final class StatisticService: StatisticServiceProtocol{
         case date
         case totalAnswers
         case correctAnswers
+        case totalAccuracy
     }
     
     
