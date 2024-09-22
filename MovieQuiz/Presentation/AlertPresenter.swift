@@ -4,11 +4,9 @@
 //
 //  Created by Olya on 15.09.2024.
 //
-
-import Foundation
 import UIKit
 
-class AlertPresenter {
+final class AlertPresenter {
     
     weak var delegate: AlertPresenterDelegate?
     weak var viewController: UIViewController?
@@ -18,17 +16,17 @@ class AlertPresenter {
     
     func presentAlert(with model: AlertModel?) {
         let alert = UIAlertController(
-                    title: model?.title,
-                    message: model?.message,
-                    preferredStyle: .alert)
+            title: model?.title,
+            message: model?.message,
+            preferredStyle: .alert)
                 
-                let action = UIAlertAction(title: model?.buttonText, style: .default) {[weak self] _ in
-                    model?.completion?()
-                    self?.delegate?.presentAlert()
-                }
-                alert.addAction(action)
-                viewController?.present(alert, animated: true, completion: nil)
-            }
+        let action = UIAlertAction(title: model?.buttonText, style: .default) {[weak self] _ in
+            model?.completion?()
+            self?.delegate?.presentAlert()
+        }
+            alert.addAction(action)
+            viewController?.present(alert, animated: true, completion: nil)
+        }
 }
 
 

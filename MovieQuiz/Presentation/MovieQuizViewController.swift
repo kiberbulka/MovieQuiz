@@ -1,15 +1,35 @@
 import UIKit
 
-final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, AlertPresenterDelegate {
-    // MARK: - Public Properties
+final class MovieQuizViewController:UIViewController,
+                                    QuestionFactoryDelegate,
+                                    AlertPresenterDelegate {
+    // MARK: - IB Outlets
+    
+    @IBOutlet private var imageView: UIImageView!
+    @IBOutlet private var textLabel: UILabel!
+    @IBOutlet private var counterLabel: UILabel!
+    @IBOutlet private var yesButton: UIButton!
+    @IBOutlet private var noButton: UIButton!
+    
+    // MARK: - Private Properties
+    
+    private let questionsAmount: Int = 10
+    private var questionFactory: QuestionFactoryProtocol = QuestionFactory()
+    private var currentQuestion: QuizQuestion?
+    private var currentQuestionIndex = 0
+    private var correctAnswers = 0
+    private var alertPresenter: AlertPresenter?
+    private var statisticService: StatisticServiceProtocol = StatisticService()
+    
     // MARK: - Lifecycle
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
         let questionFactory = QuestionFactory()
         questionFactory.delegate = self
         self.questionFactory = questionFactory
-        questionFactory.requestNextQuestion()
+        self.questionFactory.requestNextQuestion()
         
         alertPresenter = AlertPresenter(viewController: self)
         alertPresenter?.delegate = self
@@ -17,6 +37,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
                 
     }
     // MARK: - QuestionFactoryDelegate
+    
     func didRecieveNextQuestion(question: QuizQuestion?) {
         guard let question = question else {
             return
@@ -29,35 +50,15 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
         }
     }
     // MARK: - AlertPresenterDelegate
+    
         func presentAlert() {
             currentQuestionIndex = 0
             correctAnswers = 0
             show(currentIndex: currentQuestionIndex)
         }
-    
-    // MARK: - IB Outlets
-    @IBOutlet private var imageView: UIImageView!
-    @IBOutlet private var textLabel: UILabel!
-    @IBOutlet private var counterLabel: UILabel!
-    @IBOutlet var yesButton: UIButton!
-    @IBOutlet var noButton: UIButton!
-    
-    
-    
-    // MARK: - Private Properties
-    private let questionsAmount: Int = 10
-    private var questionFactory: QuestionFactoryProtocol = QuestionFactory()
-    private var currentQuestion: QuizQuestion?
-    private var currentQuestionIndex = 0
-    private var correctAnswers = 0
-    private let alert = UIAlertController(
-        title: "Этот раунд окончен!",
-        message: "Ваш результат ???",
-        preferredStyle: .alert)
-    private var alertPresenter: AlertPresenter?
-    private var statisticService: StatisticServiceProtocol = StatisticService()
-    
+
     // MARK: - IB Actions
+    
     @IBAction private func yesButtonClocked(_ sender: UIButton) {
         guard let currentQuestion = currentQuestion else {
             return
@@ -75,13 +76,12 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
             showAnswerResult(isCorrect: givenAnswer == currentQuestion.correctAnswer)
         yesButton.isEnabled = false
         noButton.isEnabled = false
-        
     }
     
     // MARK: - Private Methods
+    
     private func show(currentIndex: Int){
             questionFactory.requestNextQuestion()
-            
         }
     private func showAnswerResult(isCorrect: Bool) {
         if isCorrect{
@@ -151,8 +151,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
                 alert.addAction(action)
                 self.present(alert, animated: true, completion: nil)
         
-}
-    
+    }
 }
 /*
  Mock-данные
