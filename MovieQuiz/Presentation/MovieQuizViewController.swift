@@ -29,16 +29,17 @@ final class MovieQuizViewController:UIViewController,
         super.viewDidLoad()
         
         imageView.layer.cornerRadius = 20
-        questionFactory = QuestionFactory(moviesLoader: MoviesLoader(), delegate: self)
-        statisticService = StatisticService()
+        let questionFactory = QuestionFactory(moviesLoader: MoviesLoader(), delegate: self)
+        self.questionFactory = questionFactory
 
-        showLoadingIndicator()
-        questionFactory?.loadData()
-        
         alertPresenter = AlertPresenter(viewController: self)
         alertPresenter?.delegate = self
         
-                
+        statisticService = StatisticService()
+        showLoadingIndicator()
+        questionFactory.loadData()
+        show(currentIndex: currentQuestionIndex)
+        
     }
     // MARK: - QuestionFactoryDelegate
     
@@ -90,7 +91,8 @@ final class MovieQuizViewController:UIViewController,
     }
     
     private func showNetworkError(message: String) {
-        //hideLoadingIndicator()
+        activityIndicator.isHidden = true
+        activityIndicator.stopAnimating()
         let model = AlertModel(title: "Ошибка",
                                message: message,
                                buttonText: "Попробовать еще раз") { [weak self] in
@@ -106,11 +108,14 @@ final class MovieQuizViewController:UIViewController,
     }
     
     func didLoadDataFromServer() {
-        activityIndicator.isHidden = true
+        //DispatchQueue.main.async {
+            self.activityIndicator.isHidden = true
+        //}
+        
         questionFactory?.requestNextQuestion()
     }
 
-    func didFailToLoadData(with error: Error) {
+    func didFailToLoadData(with error: any Error) {
         showNetworkError(message: error.localizedDescription)
     }
     
