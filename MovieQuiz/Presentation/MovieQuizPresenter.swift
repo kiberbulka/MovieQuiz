@@ -7,7 +7,12 @@
 
 import Foundation
 import UIKit
-final class MovieQuizPresenter{
+final class MovieQuizPresenter: QuestionFactoryDelegate{
+   
+    
+    
+    private let statisticService: StatisticServiceProtocol!
+    
     var currentQuestion: QuizQuestion?
     weak var viewController: MovieQuizViewController?
     let questionsAmount:Int = 10
@@ -15,31 +20,45 @@ final class MovieQuizPresenter{
     var correctAnswers:Int = 0
     var questionFactory: QuestionFactoryProtocol?
     
-    
-    
-    
-    
-    
-    
-    func yesButtonClocked() {
-        didAnswer(isYes:true)
+    init(viewController: MovieQuizViewController) {
+        self.viewController = viewController
+        
+        statisticService = StatisticService()
+        
+        questionFactory = QuestionFactory(moviesLoader: MoviesLoader(), delegate: self)
+        questionFactory?.loadData()
+        viewController.showLoadingIndicator()
     }
-    func noButtonClicked() {
-        didAnswer(isYes:false)
+    // MARK: - QuestionFactoryDelegate
+    
+    func didLoadDataFromServer(){
+        viewController?.hideLoadIndicator()
+        questionFactory?.requestNextQuestion()
     }
-    private func didAnswer(isYes:Bool) {
-        guard let currentQuestion = currentQuestion else {
-            return
+    func didFailToLoadData(with error: any Error) {
+        let message = error.localizedDescription
+        viewController?.showNetworkError(message: message)
+    }
+    func didReceiveNextQuestion(question: QuizQuestion?){
+        guard let question = question else {return}
+        currentQuestion = question
+        let viewModel = convert(model: question)
+        DispatchQueue.main.async {[weak self] in
+            self?.viewController?.show(quiz: viewModel)
         }
-        let givenAnswer = isYes
-        viewController?.showAnswerResult(isCorrect: givenAnswer == currentQuestion.correctAnswer)
     }
-    
     func isLastQuestion()->Bool{
         currentQuestionIndex == questionsAmount - 1
     }
-    func resetQuestionIndex(){
+    func didAnswer(isCorrectAnswer: Bool){
+        if isCorrectAnswer{
+            correctAnswers+=1
+        }
+    }
+    func restartGame(){
         currentQuestionIndex = 0
+        correctAnswers = 0
+        questionFactory?.requestNextQuestion()
     }
     func switchToNextQuestion(){
         currentQuestionIndex += 1
@@ -51,28 +70,40 @@ final class MovieQuizPresenter{
             questionNumber: "\(currentQuestionIndex + 1)/\(questionsAmount)")
         return questionStep
     }
-    func didReceiveNextQuestion(question: QuizQuestion?) {
-        guard let question = question else {
+    func yesButtonClocked() {
+        didAnswer(isYes:true)
+    }
+    func noButtonClicked() {
+        didAnswer(isYes:false)
+    }
+    private func didAnswer(isYes:Bool) {
+        guard let currentQuestion = currentQuestion else {
             return
         }
-        currentQuestion = question
-        let viewModel = convert(model: question)
-        
-        DispatchQueue.main.async { [weak self] in
-            self?.viewController?.show(quiz: viewModel)
-        }
+        let givenAnswer = isYes
+        viewController?.proceedWithAnswer(isCorrect: givenAnswer == currentQuestion.correctAnswer)
     }
-    func showNextQuestionOrResults() {
+    private func proceedWithAnswer(isCorrect: Bool){
+        didAnswer(isCorrectAnswer: isCorrect)
+
+                viewController?.highlightImageBorder(isCorrectAnswer: isCorrect)
+
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                    guard let self = self else { return }
+                    self.proceedToNextQuestionOrResult()
+                }
+    }
+    func proceedToNextQuestionOrResult() {
         if self.isLastQuestion() {
             let currentDate = Date()
             let gameResult = GameResult(correct: correctAnswers,
                                         total: questionsAmount,
                                         date: currentDate)
             
-            viewController?.statisticService.store(gameResult)
-            guard let gamesCount = viewController?.statisticService.gamesCount,
-                  let bestGame = viewController?.statisticService.bestGame,
-                  let totalAccuracy = viewController?.statisticService.totalAccuracy else {return}
+            statisticService.store(gameResult)
+            guard let gamesCount = statisticService?.gamesCount,
+                  let bestGame = statisticService?.bestGame,
+                  let totalAccuracy = statisticService?.totalAccuracy else {return}
             
             let bestGameDate = bestGame.date.dateTimeString
             
@@ -91,7 +122,8 @@ final class MovieQuizPresenter{
             self.viewController?.show(quiz:alertModel)
         } else {
             self.switchToNextQuestion()
-            viewController?.questionFactory?.requestNextQuestion()
+            questionFactory?.requestNextQuestion()
+            
         }
     }
 }
