@@ -1,7 +1,10 @@
 import UIKit
 
 final class MovieQuizViewController:UIViewController,
-                                    AlertPresenterDelegate {
+                                    AlertPresenterDelegate,
+                                    MovieQuizViewControllerProtocol{
+   
+    
     
     // MARK: - IB Outlets
     
@@ -66,6 +69,10 @@ final class MovieQuizViewController:UIViewController,
         activityIndicator.isHidden = false
         activityIndicator.startAnimating()
     }
+    func hideLoadingIndicator() {
+        activityIndicator.isHidden = true
+        
+    }
     
     func showNetworkError(message: String) {
         activityIndicator.isHidden = true
@@ -112,7 +119,7 @@ final class MovieQuizViewController:UIViewController,
                 let action = UIAlertAction(title: result.buttonText, style: .default) { [weak self] _ in
                     guard let self = self else { return }
                     self.presenter.restartGame()
-                    self.show(currentIndex: self.presenter.currentQuestionIndex)
+
                     
                 }
                 alert.addAction(action)
