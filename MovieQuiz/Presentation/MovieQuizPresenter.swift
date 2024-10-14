@@ -116,7 +116,7 @@ final class MovieQuizPresenter: QuestionFactoryDelegate{
             
             let text = message.joined(separator: "\n")
             
-            let alertModel = QuizResultsViewModel(title: "Этот раунд закончен!",
+            let alertModel = QuizResultsViewModel(title: "Этот раунд окончен!",
                                                   text: text,
                                                   buttonText: "Сыграть еще раз")
             self.viewController?.show(quiz:alertModel)
